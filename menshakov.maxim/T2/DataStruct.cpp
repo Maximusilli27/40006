@@ -1,12 +1,4 @@
 #include "DataStruct.h"
-#include <sstream>
-#include <vector>
-#include <cctype>
-#include <algorithm>
-#include <string>
-#include <utility>
-#include <iostream>
-
 
 static inline std::string trim(const std::string& s) {
     size_t a = s.find_first_not_of(" \t\n\r");
@@ -70,7 +62,12 @@ static std::vector<long long> extract_integers(const std::string& s) {
                 long long v = std::stoll(num);
                 res.push_back(v);
             }
+            catch (const std::exception& e) {
+                std::cerr << "Ошибка: невозможно преобразовать \"" << num
+                    << "\" в число (std::stoll): " << e.what() << "\n";
+            }
             catch (...) {
+                std::cerr << "Ошибка: неизвестная ошибка при преобразовании \"" << num << "\"\n";
             }
         }
         else {
@@ -81,8 +78,15 @@ static std::vector<long long> extract_integers(const std::string& s) {
 }
 
 static bool parse_record(const std::string& rec, DataStruct& ds) {
-    if (rec.size() < 2) return false;
-    if (rec.front() != '(' || rec.back() != ')') return false;
+    if (rec.size() < 2) {
+        std::cerr << "Ошибка: строка слишком короткая: " << rec << "\n";
+        return false;
+    }
+    if (rec.front() != '(' || rec.back() != ')') {
+        std::cerr << "Ошибка: запись должна начинаться с '(' и заканчиваться ')': " << rec << "\n";
+        return false;
+    }
+
     std::string inner = rec.substr(1, rec.size() - 2);
     auto parts = split_top_level_by_colon(inner);
 
@@ -98,7 +102,10 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
 
         size_t sp = p.find(' ');
 
-        if (sp == std::string::npos) continue;
+        if (sp == std::string::npos) {
+            std::cerr << "Ошибка: неверный формат поля: " << p << "\n";
+            continue;
+        }
 
         std::string name = p.substr(0, sp);
         std::string val = trim(p.substr(sp + 1));
@@ -106,7 +113,10 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
         if (name == "key1") {
             std::string vl = trim(val);
 
-            if (vl.size() < 3) continue;
+            if (vl.size() < 3) {
+                std::cerr << "Ошибка: неверное значение key1: " << vl << "\n";
+                continue;
+            }
 
             std::string lower = vl;
             std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -120,9 +130,11 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                     has_k1 = true;
                 }
                 catch (...) {
+                    std::cerr << "Ошибка: невозможно преобразовать key1 в число: " << number_part << "\n";
                 }
             }
             else {
+                std::cerr << "Ошибка: key1 должен оканчиваться на 'll': " << vl << "\n";
             }
         }
         else if (name == "key2") {
@@ -133,12 +145,14 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                 long long den_candidate = numbers[1];
 
                 if (den_candidate < 0) {
+                    std::cerr << "Ошибка: знаменатель key2 не может быть отрицательным\n";
                     continue;
                 }
 
                 unsigned long long den = static_cast<unsigned long long>(den_candidate);
 
                 if (den == 0) {
+                    std::cerr << "Ошибка: знаменатель key2 не может быть 0\n";
                     continue;
                 }
 
@@ -147,6 +161,7 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                 has_k2 = true;
             }
             else {
+                std::cerr << "Ошибка: key2 должен содержать два числа\n";
             }
         }
         else if (name == "key3") {
@@ -158,10 +173,12 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                 has_k3 = true;
             }
             else {
+                std::cerr << "Ошибка: key3 должен быть в кавычках\n";
             }
         }
         else {
-            continue;
+            std::cerr << "Ошибка: неизвестное поле: " << name << "\n";
+            return false;
         }
     }
 
@@ -169,59 +186,65 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
         ds.key1 = k1;
         ds.key2 = k2;
         ds.key3 = k3;
-
         return true;
     }
     else {
+
+        std::cerr << "Ошибка: отсутствуют обязательные поля (key1/key2/key3)\n";
         return false;
     }
 }
 
-std::istream& operator>>(std::istream& is, DataStruct& ds) {
+std::istream& operator>>(std::istream& in, DataStruct& ds) {
+    std::istream::sentry sentry(in);
+    if (!sentry) {
+        return in;
+    }
+
     ds = DataStruct{};
-    char ch;
+    std::string rec;
+    char c = 0;
 
-    while (is.get(ch)) {
-        if (ch == '(') {
-            std::string rec;
-            rec.push_back('(');
-            int depth = 1;
-            bool in_quotes = false;
-
-            while (is.get(ch)) {
-                rec.push_back(ch);
-
-                if (ch == '"') {
-                    in_quotes = !in_quotes;
-
-                    continue;
-                }
-                if (!in_quotes) {
-                    if (ch == '(') ++depth;
-                    else if (ch == ')') {
-                        --depth;
-
-                        if (depth == 0) break;
-                    }
-                }
-            }
-            if (rec.back() != ')' && is.eof()) {
-                break;
-            }
-            if (parse_record(rec, ds)) {
-                return is;
-            }
-            else {
-                continue;
-            }
-        }
-        else {
-            continue;
+    while (in.get(c)) {
+        if (c == '(') {
+            rec.push_back(c);
+            break;
         }
     }
-    is.setstate(std::ios::eofbit);
 
-    return is;
+    if (rec.empty()) {
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+
+    int depth = 1;
+    bool in_quotes = false;
+    while (in.get(c)) {
+        rec.push_back(c);
+
+        if (c == '"') {
+            in_quotes = !in_quotes;
+        }
+        else if (!in_quotes) {
+            if (c == '(') ++depth;
+            else if (c == ')') {
+                --depth;
+                if (depth == 0) break;
+            }
+        }
+    }
+
+    if (depth != 0) {
+        std::cerr << "Ошибка: несбалансированные скобки в записи\n";
+        in.setstate(std::ios::failbit);
+        return in;
+    }
+
+    if (!parse_record(rec, ds)) {
+        in.setstate(std::ios::failbit);
+    }
+
+    return in;
 }
 
 std::ostream& operator<<(std::ostream& out, const DataStruct& ds) {

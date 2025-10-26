@@ -1,14 +1,15 @@
 #ifndef DATASTRUCT_H
 #define DATASTRUCT_H
 
-#include <string>
-#include <utility>
+#include <sstream>
+#include <vector>
+#include <algorithm>
 #include <iostream>
 
 struct DataStruct {
-    long long key1;
-    std::pair<long long, unsigned long long> key2;
-    std::string key3;
+	long long key1;
+	std::pair<long long, unsigned long long> key2;
+	std::string key3;
 };
 
 std::istream& operator>>(std::istream& is, DataStruct& ds);

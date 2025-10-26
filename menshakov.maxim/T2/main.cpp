@@ -1,10 +1,10 @@
 ﻿#include "DataStruct.h"
-#include <vector>
-#include <iterator>
-#include <algorithm>
-#include <iostream>
+#include <Windows.h>
 
 int main() {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+
     std::vector<DataStruct> v;
 
     std::istream_iterator<DataStruct> it(std::cin);
