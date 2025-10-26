@@ -2,6 +2,7 @@
 #ifdef _WIN32
 #include <Windows.h>
 #endif
+#include <iterator>
 
 int main() {
 #ifdef _WIN32
