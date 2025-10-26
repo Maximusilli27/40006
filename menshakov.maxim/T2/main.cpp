@@ -1,9 +1,13 @@
 ﻿#include "DataStruct.h"
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 
 int main() {
+#ifdef _WIN32
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
+#endif
 
     std::vector<DataStruct> v;
 
