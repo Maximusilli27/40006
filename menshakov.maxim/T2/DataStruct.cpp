@@ -63,11 +63,11 @@ static std::vector<long long> extract_integers(const std::string& s) {
                 res.push_back(v);
             }
             catch (const std::exception& e) {
-                std::cerr << "Ошибка: невозможно преобразовать \"" << num
-                    << "\" в число (std::stoll): " << e.what() << "\n";
+                //std::cerr << "Ошибка: невозможно преобразовать \"" << num
+                //    << "\" в число (std::stoll): " << e.what() << "\n";
             }
             catch (...) {
-                std::cerr << "Ошибка: неизвестная ошибка при преобразовании \"" << num << "\"\n";
+                //std::cerr << "Ошибка: неизвестная ошибка при преобразовании \"" << num << "\"\n";
             }
         }
         else {
@@ -79,11 +79,11 @@ static std::vector<long long> extract_integers(const std::string& s) {
 
 static bool parse_record(const std::string& rec, DataStruct& ds) {
     if (rec.size() < 2) {
-        std::cerr << "Error: the string is too short: " << rec << "\n";
+        //std::cerr << "Error: the string is too short: " << rec << "\n";
         return false;
     }
     if (rec.front() != '(' || rec.back() != ')') {
-        std::cerr << "Error: the record must start with '(' and end with ')': " << rec << "\n";
+        //std::cerr << "Error: the record must start with '(' and end with ')': " << rec << "\n";
         return false;
     }
 
@@ -103,7 +103,7 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
         size_t sp = p.find(' ');
 
         if (sp == std::string::npos) {
-            std::cerr << "Error: incorrect field format: " << p << "\n";
+            //std::cerr << "Error: incorrect field format: " << p << "\n";
             continue;
         }
 
@@ -114,7 +114,7 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
             std::string vl = trim(val);
 
             if (vl.size() < 3) {
-                std::cerr << "Error: incorrect value of key1:" << vl << "\n";
+                //std::cerr << "Error: incorrect value of key1:" << vl << "\n";
                 continue;
             }
 
@@ -130,11 +130,11 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                     has_k1 = true;
                 }
                 catch (...) {
-                    std::cerr << "Error: Unable to convert key1 to a number: " << number_part << "\n";
+                    //std::cerr << "Error: Unable to convert key1 to a number: " << number_part << "\n";
                 }
             }
             else {
-                std::cerr << "Error: key1 must end with 'll': " << vl << "\n";
+                //std::cerr << "Error: key1 must end with 'll': " << vl << "\n";
             }
         }
         else if (name == "key2") {
@@ -145,14 +145,14 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                 long long den_candidate = numbers[1];
 
                 if (den_candidate < 0) {
-                    std::cerr << "Error: the denominator of key2 cannot be negative\n";
+                    //std::cerr << "Error: the denominator of key2 cannot be negative\n";
                     continue;
                 }
 
                 unsigned long long den = static_cast<unsigned long long>(den_candidate);
 
                 if (den == 0) {
-                    std::cerr << "Error: the denominator of key2 cannot be 0\n";
+                    //std::cerr << "Error: the denominator of key2 cannot be 0\n";
                     continue;
                 }
 
@@ -161,7 +161,7 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                 has_k2 = true;
             }
             else {
-                std::cerr << "Error: key2 must contain two numbers\n";
+                //std::cerr << "Error: key2 must contain two numbers\n";
             }
         }
         else if (name == "key3") {
@@ -173,11 +173,11 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
                 has_k3 = true;
             }
             else {
-                std::cerr << "Error: key3 must be in quotation marks\n";
+                //std::cerr << "Error: key3 must be in quotation marks\n";
             }
         }
         else {
-            std::cerr << "Error: Unknown field: " << name << "\n";
+            //std::cerr << "Error: Unknown field: " << name << "\n";
             return false;
         }
     }
@@ -190,7 +190,7 @@ static bool parse_record(const std::string& rec, DataStruct& ds) {
     }
     else {
 
-        std::cerr << "Error: Required fields are missing (key1/key2/key3)\n";
+        //std::cerr << "Error: Required fields are missing (key1/key2/key3)\n";
         return false;
     }
 }
@@ -199,13 +199,12 @@ std::istream& operator>>(std::istream& in, DataStruct& ds) {
     std::istream::sentry sentry(in);
     if (!sentry) return in;
 
-    ds = DataStruct{}; // обнуляем объект
+    ds = DataStruct{};
 
     while (true) {
         std::string rec;
         char c;
 
-        // ищем '('
         while (in.get(c)) {
             if (c == '(') {
                 rec.push_back(c);
@@ -214,7 +213,6 @@ std::istream& operator>>(std::istream& in, DataStruct& ds) {
         }
 
         if (rec.empty()) {
-            // конец потока
             in.setstate(std::ios::eofbit);
             return in;
         }
@@ -236,16 +234,15 @@ std::istream& operator>>(std::istream& in, DataStruct& ds) {
         }
 
         if (depth != 0) {
-            std::cerr << "Error: unbalanced brackets in record, skipped: " << rec << "\n";
-            continue; // пропускаем запись и ищем следующую
+            //std::cerr << "Error: unbalanced brackets in record, skipped: " << rec << "\n";
+            continue;
         }
 
         if (!parse_record(rec, ds)) {
-            std::cerr << "Error: invalid record, skipped: " << rec << "\n";
-            continue; // пропускаем запись и ищем следующую
+            //std::cerr << "Error: invalid record, skipped: " << rec << "\n";
+            continue;
         }
 
-        // если parse_record успешен, возвращаем поток с объектом ds
         return in;
     }
 }
