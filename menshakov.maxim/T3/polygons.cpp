@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
         }
         else {
             if (!(iss >> param)) {
-                std::cout << "111 <INVALID COMMAND>\n";
+                std::cout << "<INVALID COMMAND>\n";
                 continue;
             }
 
